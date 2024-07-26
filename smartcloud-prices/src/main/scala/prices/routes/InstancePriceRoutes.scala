@@ -15,9 +15,11 @@ case class InstancePriceRoutes[F[_]: Sync](instancePriceService: InstancePriceSe
 
   implicit val instancePriceResponseEncoder = jsonEncoderOf[F, InstancePriceResponse]
 
+  object KindQueryParamMatcher extends QueryParamDecoderMatcher[String]("kind")
+
   private val get: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root =>
-      instancePriceService.getPrice("").flatMap(price => Ok(InstancePriceResponse(price)))
+    case GET -> Root :? KindQueryParamMatcher(kind) =>
+      instancePriceService.getPrice(kind).flatMap(price => Ok(InstancePriceResponse(price)))
   }
 
   def routes: HttpRoutes[F] =

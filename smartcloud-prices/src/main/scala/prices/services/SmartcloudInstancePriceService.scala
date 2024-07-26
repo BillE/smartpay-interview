@@ -23,16 +23,13 @@ object SmartcloudInstancePriceService {
 
     implicit val instancePriceEntityDecoder: EntityDecoder[F, Price] = jsonOf[F, Price]
 
-    // TODO: this should come from the GET call /instances/sc2-micro
-    val getAllUri = s"${config.baseUri}/instances/sc2-micro"
+    val getAllUri = s"${config.baseUri}/instances"
 
-    private val request: Request[F] =
-      Request[F](
-        uri = Uri.unsafeFromString(getAllUri),
-        headers = Headers(Accept(MediaType.text.strings), Authorization(Credentials.Token(AuthScheme.Bearer, config.token)))
+    override def getPrice(kind: String): F[Price] = {
+      val request = Request[F](
+        uri = Uri.unsafeFromString(getAllUri) / kind ,
+        headers = Headers(Accept(MediaType.application.json), Authorization(Credentials.Token(AuthScheme.Bearer, config.token)))
       )
-
-    override def getPrice(kind: String): F[Price] =
       client.run(request).use { response =>
         if (response.status.isSuccess) {
           response.as[Price]
@@ -42,6 +39,7 @@ object SmartcloudInstancePriceService {
           Concurrent[F].raiseError(new Exception("An error has occurred fetching results."))
         }
       }
+    }
 
   }
 
