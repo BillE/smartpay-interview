@@ -36,6 +36,8 @@ object SmartcloudInstanceKindService {
       client.run(request).use { response =>
         if (response.status.isSuccess) {
           response.as[List[String]].map(strings => strings.map(s => InstanceKind(s)))
+        } else if (response.status.code.equals(429)) {
+          Concurrent[F].raiseError(new Exception("Too many request, please try again later."))
         } else {
           Concurrent[F].raiseError(new Exception("Error fetching results."))
         }

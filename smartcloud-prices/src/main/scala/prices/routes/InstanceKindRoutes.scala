@@ -6,7 +6,6 @@ import org.http4s.HttpRoutes
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.Router
-
 import prices.routes.protocol._
 import prices.services.InstanceKindService
 
