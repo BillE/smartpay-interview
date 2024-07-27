@@ -22,21 +22,23 @@ object SmartcloudInstancePriceService {
                                                                      ) extends InstancePriceService[F] {
 
     implicit val instancePriceEntityDecoder: EntityDecoder[F, Price] = jsonOf[F, Price]
-
-    val getAllUri = s"${config.baseUri}/instances"
+    // TODO: assumes config is valid
+    val baseUri = Uri.unsafeFromString(s"${config.baseUri}/instances")
 
     override def getPrice(kind: String): F[Price] = {
       val request = Request[F](
-        uri = Uri.unsafeFromString(getAllUri) / kind ,
+        uri = baseUri / kind ,
         headers = Headers(Accept(MediaType.application.json), Authorization(Credentials.Token(AuthScheme.Bearer, config.token)))
       )
       client.run(request).use { response =>
         if (response.status.isSuccess) {
           response.as[Price]
         } else if (response.status.code.equals(429)) {
-          Concurrent[F].raiseError(new Exception("Too many request, please try again later."))
+          Concurrent[F].raiseError(TooManyRequestsException)
+        } else if (response.status.code.equals(404)) {
+          Concurrent[F].raiseError(InvalidRequestExcption)
         } else {
-          Concurrent[F].raiseError(new Exception("An error has occurred fetching results."))
+          Concurrent[F].raiseError(GenericExcpetion)
         }
       }
     }

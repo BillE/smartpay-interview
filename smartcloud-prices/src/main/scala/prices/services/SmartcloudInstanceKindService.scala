@@ -24,12 +24,10 @@ object SmartcloudInstanceKindService {
 
     implicit val instanceKindsEntityDecoder: EntityDecoder[F, List[String]] = jsonOf[F, List[String]]
 
-    val getAllUri = s"${config.baseUri}/instances"
-
     private val request: Request[F] =
       Request[F](
-        uri = Uri.unsafeFromString(getAllUri),
-        headers = Headers(Accept(MediaType.text.strings), Authorization(Credentials.Token(AuthScheme.Bearer, config.token)))
+        uri = Uri.unsafeFromString(s"${config.baseUri}/instances"),
+        headers = Headers(Accept(MediaType.application.json), Authorization(Credentials.Token(AuthScheme.Bearer, config.token)))
       )
 
     override def getAll(): F[List[InstanceKind]] =
@@ -37,9 +35,9 @@ object SmartcloudInstanceKindService {
         if (response.status.isSuccess) {
           response.as[List[String]].map(strings => strings.map(s => InstanceKind(s)))
         } else if (response.status.code.equals(429)) {
-          Concurrent[F].raiseError(new Exception("Too many request, please try again later."))
+          Concurrent[F].raiseError(TooManyRequestsException)
         } else {
-          Concurrent[F].raiseError(new Exception("Error fetching results."))
+          Concurrent[F].raiseError(GenericExcpetion)
         }
       }
 

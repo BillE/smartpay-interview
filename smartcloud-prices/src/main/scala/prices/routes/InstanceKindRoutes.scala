@@ -7,7 +7,7 @@ import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.Router
 import prices.routes.protocol._
-import prices.services.InstanceKindService
+import prices.services.{InstanceKindService, TooManyRequestsException}
 
 final case class InstanceKindRoutes[F[_]: Sync](instanceKindService: InstanceKindService[F]) extends Http4sDsl[F] {
 
@@ -17,7 +17,10 @@ final case class InstanceKindRoutes[F[_]: Sync](instanceKindService: InstanceKin
 
   private val get: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root =>
-      instanceKindService.getAll().flatMap(kinds => Ok(kinds.map(k => InstanceKindResponse(k))))
+      instanceKindService.getAll().flatMap(kinds => Ok(kinds.map(k => InstanceKindResponse(k)))).handleErrorWith{
+        case TooManyRequestsException => TooManyRequests("Too many requests. Please try again later.")
+        case other => InternalServerError(other.getMessage)
+      }
   }
 
   def routes: HttpRoutes[F] =
