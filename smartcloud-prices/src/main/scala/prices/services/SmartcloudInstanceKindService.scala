@@ -32,11 +32,13 @@ object SmartcloudInstanceKindService {
 
     override def getAll(): F[List[InstanceKind]] =
       client.run(request).use { response =>
-        if (response.status.isSuccess) {
-          response.as[List[String]].map(strings => strings.map(s => InstanceKind(s)))
-        } else response.status.code match {
-          case 429 => Concurrent[F].raiseError(TooManyRequestsException)
-          case _ => Concurrent[F].raiseError(GenericExcpetion)
+        response.status match {
+          case status if status.isSuccess =>
+            response.as[List[String]].map(_.map(InstanceKind(_)))
+          case Status.TooManyRequests =>
+            Concurrent[F].raiseError(TooManyRequestsException)
+          case _ =>
+            Concurrent[F].raiseError(GenericExcpetion)
         }
       }
   }

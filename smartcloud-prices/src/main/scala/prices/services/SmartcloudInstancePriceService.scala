@@ -1,7 +1,7 @@
 package prices.services
 
 import cats.effect.Concurrent
-import org.http4s.{AuthScheme, Credentials, EntityDecoder, Headers, MediaType, Request, Uri}
+import org.http4s.{AuthScheme, Credentials, EntityDecoder, Headers, MediaType, Request, Status, Uri}
 import org.http4s.circe.jsonOf
 import org.http4s.client.Client
 import org.http4s.headers.{Accept, Authorization}
@@ -35,16 +35,18 @@ object SmartcloudInstancePriceService {
           Authorization(Credentials.Token(AuthScheme.Bearer, config.token)))
       )
       client.run(request).use { response =>
-        if (response.status.isSuccess) {
-          response.as[Price]
-        } else  response.status.code match {
-          case 429 => Concurrent[F].raiseError(TooManyRequestsException)
-          case 404 => Concurrent[F].raiseError(InvalidRequestExcption)
-          case _ => Concurrent[F].raiseError(GenericExcpetion)
+        response.status match {
+          case status if status.isSuccess =>
+            response.as[Price]
+          case Status.TooManyRequests =>
+            Concurrent[F].raiseError(TooManyRequestsException)
+          case Status.NotFound =>
+            Concurrent[F].raiseError(InvalidRequestExcption)
+          case _ =>
+            Concurrent[F].raiseError(GenericExcpetion)
         }
       }
     }
-
   }
 
 }

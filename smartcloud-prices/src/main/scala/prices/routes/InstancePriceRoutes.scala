@@ -26,9 +26,11 @@ case class InstancePriceRoutes[F[_]: Sync](instancePriceService: InstancePriceSe
           TooManyRequests("Too many requests. Please try again later.")
         case InvalidRequestExcption =>
           BadRequest("No records found. Please check the kind and try again.")
-        case other => InternalServerError(other.getMessage)
+        case other =>
+          InternalServerError(other.getMessage)
       }
   }
+
 
   def routes: HttpRoutes[F] =
     Router(
