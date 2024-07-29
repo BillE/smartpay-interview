@@ -17,9 +17,13 @@ final case class InstanceKindRoutes[F[_]: Sync](instanceKindService: InstanceKin
 
   private val get: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root =>
-      instanceKindService.getAll().flatMap(kinds => Ok(kinds.map(k => InstanceKindResponse(k)))).handleErrorWith{
-        case TooManyRequestsException => TooManyRequests("Too many requests. Please try again later.")
-        case other => InternalServerError(other.getMessage)
+      instanceKindService.getAll().flatMap { kinds =>
+        Ok(kinds.map(k => InstanceKindResponse(k)))
+      }.handleErrorWith {
+        case TooManyRequestsException =>
+          TooManyRequests("Too many requests. Please try again later.")
+        case other =>
+          InternalServerError(other.getMessage)
       }
   }
 

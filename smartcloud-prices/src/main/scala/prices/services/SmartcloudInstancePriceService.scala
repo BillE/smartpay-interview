@@ -17,28 +17,30 @@ object SmartcloudInstancePriceService {
   def make[F[_]: Concurrent](config: Config, client: Client[F]): InstancePriceService[F] = new SmartcloudInstancePriceService(config, client)
 
   private final class SmartcloudInstancePriceService[F[_]: Concurrent](
-                                                                       config: Config,
-                                                                       client: Client[F]
-                                                                     ) extends InstancePriceService[F] {
+                                                                        config: Config,
+                                                                        client: Client[F]
+                                                                      ) extends InstancePriceService[F] {
+
+
 
     implicit val instancePriceEntityDecoder: EntityDecoder[F, Price] = jsonOf[F, Price]
-    // TODO: assumes config is valid
-    val baseUri = Uri.unsafeFromString(s"${config.baseUri}/instances")
+
+    private val baseUri = Uri.unsafeFromString(s"${config.baseUri}/instances")
 
     override def getPrice(kind: String): F[Price] = {
       val request = Request[F](
-        uri = baseUri / kind ,
-        headers = Headers(Accept(MediaType.application.json), Authorization(Credentials.Token(AuthScheme.Bearer, config.token)))
+        uri = baseUri / kind,
+        headers = Headers(
+          Accept(MediaType.application.json),
+          Authorization(Credentials.Token(AuthScheme.Bearer, config.token)))
       )
       client.run(request).use { response =>
         if (response.status.isSuccess) {
           response.as[Price]
-        } else if (response.status.code.equals(429)) {
-          Concurrent[F].raiseError(TooManyRequestsException)
-        } else if (response.status.code.equals(404)) {
-          Concurrent[F].raiseError(InvalidRequestExcption)
-        } else {
-          Concurrent[F].raiseError(GenericExcpetion)
+        } else  response.status.code match {
+          case 429 => Concurrent[F].raiseError(TooManyRequestsException)
+          case 404 => Concurrent[F].raiseError(InvalidRequestExcption)
+          case _ => Concurrent[F].raiseError(GenericExcpetion)
         }
       }
     }

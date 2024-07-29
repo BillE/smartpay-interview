@@ -19,9 +19,13 @@ case class InstancePriceRoutes[F[_]: Sync](instancePriceService: InstancePriceSe
 
   private val get: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root :? KindQueryParamMatcher(kind) =>
-      instancePriceService.getPrice(kind).flatMap(price => Ok(InstancePriceResponse(price, kind))).handleErrorWith{
-        case TooManyRequestsException => TooManyRequests("Too many requests. Please try again later.")
-        case InvalidRequestExcption => BadRequest("No records found. Please check the kind and try again.")
+      instancePriceService.getPrice(kind).flatMap { price =>
+        Ok(InstancePriceResponse(price, kind))
+      }.handleErrorWith {
+        case TooManyRequestsException =>
+          TooManyRequests("Too many requests. Please try again later.")
+        case InvalidRequestExcption =>
+          BadRequest("No records found. Please check the kind and try again.")
         case other => InternalServerError(other.getMessage)
       }
   }

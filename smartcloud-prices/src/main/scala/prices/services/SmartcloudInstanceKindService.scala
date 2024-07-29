@@ -34,13 +34,11 @@ object SmartcloudInstanceKindService {
       client.run(request).use { response =>
         if (response.status.isSuccess) {
           response.as[List[String]].map(strings => strings.map(s => InstanceKind(s)))
-        } else if (response.status.code.equals(429)) {
-          Concurrent[F].raiseError(TooManyRequestsException)
-        } else {
-          Concurrent[F].raiseError(GenericExcpetion)
+        } else response.status.code match {
+          case 429 => Concurrent[F].raiseError(TooManyRequestsException)
+          case _ => Concurrent[F].raiseError(GenericExcpetion)
         }
       }
-
   }
 
 }
