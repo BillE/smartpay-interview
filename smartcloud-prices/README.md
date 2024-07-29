@@ -1,48 +1,41 @@
 # Smartcloud instance prices API
 
-This project provides a GET API to retrieve real-time machine instance prices from Smartcloud, a cloud instance provider. 
+**Important: Do NOT fork this repository if you want to submit a solution.**
 
-## Setup
+Imagine we run our infrastructure on a fictional cloud provider, Smartcloud. As their machine instance prices fluctuate all the time, Smartcloud provides an API for us to retrieve their prices in real time. This helps us in managing our cost.
 
-As we are consuming data from a REST API, the configuration files must be set to the correct values. In the application.conf 
-file we configure a URI for the REST API server as well as an auth token to validate requests. Both values are 
-configured in the application.conf file and by default are set to 
-run against the docker image at [smartcloud](https://hub.docker.com/r/smartpayco/smartcloud) running locally on port 9999. 
+# Requirements
 
-## Instructions
-
-To start the serivce, simple run the following command. This will start the server which wil then accept requests on port 8080.
-```
-sbt run
-```
-
-Two types of requrests may be made
-1. Price information for a given instance kind.
-1. An exhaustive list of all instance kinds.
-
-For price information, issue a request in the following format:
+Implement an API for fetching and returning machine instance prices from Smartcloud.
 
 ```
-curl http://localhost:8080/prices?kind=sc2-small
-
+GET /prices?kind=sc2-micro
+{"kind":"sc2-micro","amount":0.42}, ... (omitted)
 ```
 
-For an exhaustive list of all instance kinds, simply run:
+This project scaffold provides an end-to-end implementation of an API endpoint which returns some dummy data. You should try to follow the same code structure.
+
+You should implement `SmartcloudPriceService` to call the [smartcloud](https://hub.docker.com/r/smartpayco/smartcloud) endpoint and return the price data. Note that the smartcloud service has usage quota and may return error occassionally to simulate unexpected errors. Please make sure your service is able to handle the constraint and errors gracefully.
+
+You should also include a README file to document:-
+1. Any assumptions you make
+1. Any design decisions you make
+1. Instruction on how to run your code
+
+You should use git and make small commits with meaningful commit messages as you implement your solution.
+
+# Setup
+
+Follow the instruction at [smartcloud](https://hub.docker.com/r/smartpayco/smartcloud) to run the Docker container on your machine.
+
+Clone or download this project onto your machine and run
 
 ```
-curl http://localhost:8080/instance-kinds
-
+$ sbt run
 ```
 
-## Assumptions
-The code does not validate configuration and relies on the validity of the implementor. It is also assumed that the
-consumer of the service will handle error codes correctly (400,500,etc.) and take appropriate action. 
+The API should be running on your port 8080.
 
-## Design Decisions
-GET requests for instance kind only accept a single value. Future implementations may accept a list of types to reduce
-the number of calls the client must make to retrieve pertinent information. There is also no retry logic. If an upstream 
-error occurs, the end user is prompted to try again. For error handling, we are specifically handling two use cases: 
-1. usage quota exceeded (429)
-1. Instance type not found (404)
+# How to submit
 
-All other errors are handled generically.
+Please push your code to a public repository and submit the link via email. Please do not fork this repository.
